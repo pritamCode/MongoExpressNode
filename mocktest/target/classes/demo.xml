@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="275a8a04-9033-4db6-8406-478ec42f474e" >
+		<http:request-connection protocol="HTTPS" host="account-d.docusign.com" />
+	</http:request-config>
+	<flow name="demoFlow" doc:id="1e9fc377-0418-4d16-a010-99d39332f79b" >
+		<http:listener doc:name="Listener" doc:id="2dfb0aae-89e5-406e-8cab-08ee38e92585" config-ref="HTTP_Listener_config" path="/demo" allowedMethods="POST"/>
+		<ee:transform doc:name="Transform Message" doc:id="ae3151e3-cd80-4644-b1fe-c3ce1668aa53" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="array1" ><![CDATA[[2,5,7,1,3]]]></ee:set-variable>
+				<ee:set-variable variableName="array2" ><![CDATA[[1,2,22,7]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="56359ac7-8d40-45ff-b075-b0e25423ea78" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+using(data = vars.array1 map {
+	"contains" : vars.array2 contains $
+})
+
+data.contains]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="3877c13f-cef3-4599-b95e-3bad82a9f772" variableName="data"/>
+		<foreach doc:name="For Each" doc:id="871acc85-d4ee-4988-afcd-1dcbb081b6cd" collection="#[vars.data]">
+			<choice doc:name="Choice" doc:id="8aa1224f-3051-4bfb-b09b-985fd84983d1" >
+				<when expression="#[payload == true]">
+					<logger level="INFO" doc:name="Logger" doc:id="4cd82842-aa62-48e0-8a8a-327a70f125f3" message="valule is true"/>
+				</when>
+				<otherwise >
+					<logger level="INFO" doc:name="Logger" doc:id="113ed49e-f3a2-4482-a6d6-d862d767fe2d" message="value is false"/>
+				</otherwise>
+			</choice>
+		</foreach>
+	</flow>
+	<flow name="demoFlow1" doc:id="2becb83a-9f89-4eb5-9618-320889bd3870" >
+		<http:listener doc:name="Listener" doc:id="40235714-fa32-485a-84f2-0c1dbd1e8602" config-ref="HTTP_Listener_config" path="/hello"/>
+		<ee:transform doc:name="Transform Message" doc:id="80f8cbf0-9858-45a9-b322-360efc9db2fe" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import modules::myMapping
+output application/json
+---
+myMapping::main(payload: { "user" : "bar" })]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="demoFlow2" doc:id="9cd9addd-3deb-4fed-ae1e-7b0dfb412576" >
+		<http:listener doc:name="Listener" doc:id="89894e5a-5b8b-4ec2-bbf9-5ac816aff47a" config-ref="HTTP_Listener_config" path="/hello"/>
+		<set-payload value='#["Hello World"]' doc:name="Set Payload" doc:id="aaef861f-44f1-4893-8269-4ff4c4ddc4c7" />
+	</flow>
+</mule>
